@@ -205,20 +205,13 @@ for x in Camaras:
     snapshot_url=meraki_snapshot_response_json['url']
     print(snapshot_url)
     
-    ## Webex API
-	
-	## Teams API
-	# MS URL
-	msteamsurl = credentials.MS_TEAMS_URL
-	slackurl = credentials.SLACK_URL
-
-	if msteamsurl != '':
-		msteams_flag = True
-	else:
-		msteams_flag = False
-
-	if slackurl != '':
-		slack_flag = True
-	else:
-		slack_flag = False
+    # Teams API 
+    # MS URL
+    msteamsurl = credentials.MS_TEAMS_URL
+    
+    if msteamsurl != '':
+        msteams_flag = True
+    else:
+        msteams_flag = False
+    
 
