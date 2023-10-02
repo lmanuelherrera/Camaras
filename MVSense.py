@@ -190,6 +190,7 @@ for x in Camaras:
     WEBEX_API_URL = 'https://webexapis.com/v1/messages'
     #WEBEX_ACCESS_TOKEN = 'NzYwNzA3NDctN2U2Zi00YTc0LThlY2YtNzM4ODU3MTc3ZjgwNmUzZTA3ZWYtM2Uy_PF84_b4e50a79-b7de-4ee2-940a-a983d1e5c35b'
     WEBEX_ACCESS_TOKEN = get_access_token()
+    print(WEBEX_ACCESS_TOKEN)
     
     httpHeaders = {'Authorization': f'Bearer {WEBEX_ACCESS_TOKEN}'}
     texto = nombre_device +", personas: "+ str(num_of_person_detected)
