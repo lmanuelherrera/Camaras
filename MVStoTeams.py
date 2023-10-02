@@ -9,7 +9,7 @@ import meraki
 import time
 import shutil
 import datetime
-#import pymsteams
+import pymsteams
 
 import credentials  # noqa
 
@@ -207,11 +207,43 @@ for x in Camaras:
     
     # Teams API 
     # MS URL
-    msteamsurl = credentials.MS_TEAMS_URL
-    
-    if msteamsurl != '':
-        msteams_flag = True
-    else:
-        msteams_flag = False
-    
+    #import requests
+    #import json
 
+    url = "https://intellego365.webhook.office.com/webhookb2/51ee0df2-da6a-4546-a7c6-c4dd1996316b@00a05ce0-bd3d-4215-a569-c6261a20a39e/IncomingWebhook/32f21017b58d4e7c9cebd78867af2e2c/6d7d8f86-a22c-4098-8447-dc58315e185b"
+
+    payload = json.dumps({
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "themeColor": "0076D7",
+    "summary": "Luis Herrera ha creado un nuevo mensaje 1",
+    "sections": [
+        {
+        "activityTitle": "Luis Herrera ha creado un nuevo mensaje 2",
+        "activitySubtitle": "Para las Camaras Meraki",
+        "activityImage": snapshot_url,
+        "facts": [
+            {
+            "name": "Nombre Camara",
+            "value": x
+            },
+            {
+            "name": "Personas",
+            "value": num_of_person_detected
+            },
+            {
+            "name": "Serial",
+            "value": serial
+            }
+        ],
+        "markdown": True
+        }
+    ]
+    })
+    headers = {
+    'Content-Type': 'application/json'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    print(response.text)
