@@ -1,3 +1,18 @@
+from pprint import pprint
+from flask import Flask, json, request, render_template
+import sys, os, getopt, json
+from webexteamssdk import WebexTeamsAPI
+#import adaptive_cards
+#import slack_cards
+import requests
+import meraki
+import time
+import shutil
+import datetime
+import pymsteams
+
+import credentials  # noqa
+
 import time
 import json
 import locale
@@ -155,6 +170,10 @@ Camaras = {
     "MV32_Camara_6":"Q2PV-ZEE6-RRXG",
 }
 
+WEBEX_API_URL = 'https://webexapis.com/v1/messages'
+WEBEX_ACCESS_TOKEN = get_access_token()
+print(WEBEX_ACCESS_TOKEN)
+
 for x in Camaras:
     print(x)
     print(Camaras[x])
@@ -173,7 +192,16 @@ for x in Camaras:
     
     ##Get Device
     print('Get Device')
-    nombre_device = x
+    #nombre_device = x
+    #print('Get Device')
+    meraki_device_url = 'https://api.meraki.com/api/v1/devices/'+serial
+    meraki_device_response = requests.get(meraki_device_url, headers=meraki_headers)
+    meraki_device_response_json=json.loads(meraki_device_response.text)
+    nombre_device = meraki_device_response_json['name']
+    modelo = meraki_device_response_json['model']
+    url_device=meraki_device_response_json['url']
+    ubicacion=meraki_device_response_json['address']
+    print(nombre_device)
     
     ## Snapshot API
     print('Snapshot API')
@@ -184,19 +212,123 @@ for x in Camaras:
     snapshot_url=meraki_snapshot_response_json['url']
     print(snapshot_url)
     
+    today = datetime.datetime.now() 
+    fecha = today.strftime('%A, %d de %B de %Y a las %I:%M:%S %p')
+    
     ## Webex API
     print('Sending Message via WebEx API')
-    
-    WEBEX_API_URL = 'https://webexapis.com/v1/messages'
-    #WEBEX_ACCESS_TOKEN = 'NzYwNzA3NDctN2U2Zi00YTc0LThlY2YtNzM4ODU3MTc3ZjgwNmUzZTA3ZWYtM2Uy_PF84_b4e50a79-b7de-4ee2-940a-a983d1e5c35b'
-    WEBEX_ACCESS_TOKEN = get_access_token() #ojo revisar... consultas innecesarias en ciclos...
-    print(WEBEX_ACCESS_TOKEN)
-    
     httpHeaders = {'Authorization': f'Bearer {WEBEX_ACCESS_TOKEN}'}
-    texto = nombre_device +", personas: "+ str(num_of_person_detected)
-    body = {'roomId': 'Y2lzY29zcGFyazovL3VzL1JPT00vYTc1YTgzOTAtNTYzMC0xMWVlLTk2MTEtMDU3YWFkYjZhNWM3', 'text':texto,'files':snapshot_url}
+    texto = "Nombre Camara: "+nombre_device+"\nModelo: "+modelo+"\nPersonas: "+ str(num_of_person_detected)+"\nUbicacion: "+ubicacion+"\nCámara en vivo: "+url_device
+    body = {'roomId': 'Y2lzY29zcGFyazovL3VzL1JPT00vYTc1YTgzOTAtNTYzMC0xMWVlLTk2MTEtMDU3YWFkYjZhNWM3','text':texto,'files':snapshot_url}#,'markdown': f'camara en [vivo]({url_device})'}
     print(texto)
-    
     response = requests.post(url=WEBEX_API_URL, headers=httpHeaders, json=body)
-    print(response.status_code)
-    print(json.dumps(response.json(), indent=2))
+    #print(response.status_code)
+    #print(json.dumps(response.json(), indent=2))
+    
+    # Teams API
+    url = "https://intellego365.webhook.office.com/webhookb2/51ee0df2-da6a-4546-a7c6-c4dd1996316b@00a05ce0-bd3d-4215-a569-c6261a20a39e/IncomingWebhook/32f21017b58d4e7c9cebd78867af2e2c/6d7d8f86-a22c-4098-8447-dc58315e185b"
+    payload = json.dumps({
+    "type": "message",
+    "attachments": [
+        {
+        "contentType": "application/vnd.microsoft.card.adaptive",
+        "contentUrl": None,
+        "content": {
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "type": "AdaptiveCard",
+            "body": [
+            {
+                "type": "TextBlock",
+                "size": "Medium",
+                "weight": "Bolder",
+                "text": "Notificaciones Meraki"
+            },
+            {
+                "type": "ColumnSet",
+                "columns": [
+                {
+                    "type": "Column",
+                    "items": [
+                    {
+                        "type": "Image",
+                        "style": "Person",
+                        "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/CCTV_dome_camera.svg/254px-CCTV_dome_camera.svg.png",
+                        "size": "Medium"
+                    }
+                    ],
+                    "width": "auto"
+                },
+                {
+                    "type": "Column",
+                    "items": [
+                    {
+                        "type": "TextBlock",
+                        "weight": "Bolder",
+                        "text": "Sensores Meraki",
+                        "wrap": True
+                    },
+                    {
+                        "type": "TextBlock",
+                        "spacing": "None",
+                        "text": "Deteccion de Movimiento",
+                        "isSubtle": True,
+                        "wrap": True
+                    }
+                    ],
+                    "width": "stretch"
+                }
+                ]
+            },
+            {
+                "type": "TextBlock",
+                "text": "El acceso a las cámaras está proporcionado desde la nube de Cisco a través de la red de Axity",
+                "wrap": True
+            },
+            {
+                "type": "FactSet",
+                "facts": [
+                {
+                    "title": "Nombre Camara:",
+                    "value": nombre_device
+                },
+                {
+                    "title": "Modelo:",
+                    "value": modelo
+                },
+                {
+                    "title": "Personas:",
+                    "value": num_of_person_detected
+                },
+                {
+                    "title": "Ubicacion:",
+                    "value": ubicacion
+                }
+                ]
+            },
+            {
+                "type": "Image",
+                "url": snapshot_url
+            },
+            {
+                "type": "TextBlock",
+                "text": f"Capture: {fecha}"
+            }
+            ],
+            "actions": [
+            {
+                "type": "Action.OpenUrl",
+                "title": "Camara en Vivo",
+                "url": url_device
+            }
+        ]
+        }
+        }
+    ]
+    })
+    headers = {
+    'Content-Type': 'application/json'
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload)
+
+    print(response.text) #si es 1 es consulta exitosa
