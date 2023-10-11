@@ -1,3 +1,6 @@
+#Codigo que descarga datos de cantidad de personas y snapshot desde las camaras meraki
+#y envía notificaciones a la mensajeria de webex y de teams
+
 from pprint import pprint
 from flask import Flask, json, request, render_template
 import sys, os, getopt, json
@@ -11,7 +14,7 @@ import shutil
 import datetime
 import pymsteams
 
-import credentials  # noqa
+#import credentials  # noqa
 
 import time
 import json
